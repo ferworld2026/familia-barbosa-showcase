@@ -1,0 +1,82 @@
+PDF Image Extraction — Log
+Date       : 2026-06-12
+Source     : Report (40).pdf
+Output     : /Users/mbam3/Downloads/2026-06-12 Imágenes de los PDFs
+================================================================
+
+Property : 117 Farming Grv Boerne, TX 78006
+Folder   : 117_Farming_Grv_Boerne/
+Images   : 44
+Pages    : 1–67
+
+Property : 23347 Grande Vista San Antonio, TX 78261
+Folder   : 23347_Grande_Vista_San_Antonio/
+Images   : 2
+Pages    : 210–211
+
+Property : 23358 Grande Vista San Antonio, TX 78261
+Folder   : 23358_Grande_Vista_San_Antonio/
+Images   : 4
+Pages    : 206–209
+
+Property : 24318 Canyon Row San Antonio, TX 78260
+Folder   : 24318_Canyon_Row_San_Antonio/
+Images   : 43
+Pages    : 137–179
+
+Property : 311 Canyon Path San Antonio, TX 78258
+Folder   : 311_Canyon_Path_San_Antonio/
+Images   : 4
+Pages    : 214–219
+
+Property : 315 Canyon Path San Antonio, TX 78258
+Folder   : 315_Canyon_Path_San_Antonio/
+Images   : 4
+Pages    : 220–226
+
+Property : 319 Canyon Path San Antonio, TX 78258
+Folder   : 319_Canyon_Path_San_Antonio/
+Images   : 4
+Pages    : 228–233
+
+Property : 5226 Breeze Way San Antonio, TX 78249
+Folder   : 5226_Breeze_Way_San_Antonio/
+Images   : 50
+Pages    : 69–118
+
+Property : 7110 Avignon Forest San Antonio, TX 78256
+Folder   : 7110_Avignon_Forest_San_Antonio/
+Images   : 11
+Pages    : 189–205
+
+Property : 7114 Avignon Forest San Antonio, TX 78256
+Folder   : 7114_Avignon_Forest_San_Antonio/
+Images   : 3
+Pages    : 180–188
+
+Property : 7118 Avignon Forest San Antonio, TX 78256
+Folder   : 7118_Avignon_Forest_San_Antonio/
+Images   : 3
+Pages    : 128–136
+
+Property : 7122 Avignon Forest San Antonio, TX 78256
+Folder   : 7122_Avignon_Forest_San_Antonio/
+Images   : 3
+Pages    : 119–127
+
+================================================================
+SKIPPED (9 images):
+  Page  68: too_small (150×163)
+  Page 121: too_tall (892×1920)
+  Page 124: too_tall (972×1920)
+  Page 130: too_tall (662×1457)
+  Page 133: too_tall (681×1498)
+  Page 182: too_tall (534×1080)
+  Page 185: too_tall (546×1080)
+  Page 199: too_tall (886×1920)
+  Page 202: too_tall (890×1920)
+
+================================================================
+TOTAL EXTRACTED : 175
+TOTAL SKIPPED   : 9
+PROPERTIES      : 12
