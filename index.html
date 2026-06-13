@@ -6,992 +6,608 @@
     <title>Familia Barbosa - 210 Realty Group Property Showcase</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDrJTe5Ogh7mBiW_Hrx28hMrUB0N3Ecqvs&libraries=geometry"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --primary: #3B549E;
             --primary-dark: #2c3e7f;
             --accent: #059669;
             --light-gray: #f3f4f6;
-            --border-gray: #e5e7eb;
             --text-dark: #1f2937;
-            --text-light: #6b7280;
-            --opacity-40: rgba(0, 0, 0, 0.4);
+            --overlay-bg: rgba(0,0,0,0.45);
         }
 
         html, body {
-            width: 100%;
-            height: 100%;
-            font-family: 'Haboro Contrast', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #000;
-            color: var(--text-dark);
+            width: 100%; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000; color: var(--text-dark);
             overflow: hidden;
         }
 
-        /* Welcome Overlay */
-        .welcome-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        /* ── WELCOME ─────────────────────────────────────────────────── */
+        #welcomeOverlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             z-index: 3000;
             animation: fadeOut 5s ease-in-out forwards;
         }
-
         @keyframes fadeOut {
-            0% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; pointer-events: none; }
+            0%,80% { opacity: 1; }
+            100%    { opacity: 0; }
         }
+        .welcome-content { text-align: center; color: white; }
+        .welcome-logo    { font-size: 64px; margin-bottom: 20px; }
+        .welcome-title   { font-size: 48px; font-weight: bold; margin-bottom: 15px; }
+        .welcome-sub     { font-size: 24px; opacity: .95; }
 
-        .welcome-content {
-            text-align: center;
-            color: white;
+        /* ── MENU ────────────────────────────────────────────────────── */
+        #menuOverlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 2000; gap: 40px;
+            transition: opacity .3s;
         }
-
-        .welcome-logo {
-            font-size: 64px;
-            margin-bottom: 20px;
+        #menuOverlay.hidden { opacity: 0; pointer-events: none; }
+        .menu-title { color: white; font-size: 48px; font-weight: bold; text-align: center; }
+        .menu-buttons { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; }
+        .mode-btn {
+            background: white; color: var(--primary);
+            border: none; padding: 20px 40px; border-radius: 12px;
+            cursor: pointer; font-size: 20px; font-weight: bold;
+            min-width: 200px; transition: all .3s;
         }
+        .mode-btn:hover { background: var(--light-gray); transform: scale(1.05); }
 
-        .welcome-title {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        .welcome-subtitle {
-            font-size: 24px;
-            opacity: 0.95;
-        }
-
-        /* Menu Mode */
-        .menu-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            gap: 40px;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-            pointer-events: all;
-        }
-
-        .menu-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .menu-title {
-            color: white;
-            font-size: 48px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .menu-buttons {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .mode-button {
-            background: white;
-            color: var(--primary);
-            border: none;
-            padding: 20px 40px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 20px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            min-width: 200px;
-        }
-
-        .mode-button:hover {
-            background: var(--light-gray);
-            transform: scale(1.05);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-        }
-
-        .mode-button:active {
-            transform: scale(0.98);
-        }
-
-        /* Carousel Mode */
-        .carousel-view {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        /* ── CAROUSEL ───────────────────────────────────────────────── */
+        #carouselView {
+            position: fixed; inset: 0;
             background: #000;
-            display: none;
-            z-index: 1500;
+            display: none; z-index: 1500;
         }
+        #carouselView.active { display: block; }
 
-        .carousel-view.active {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .carousel-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .carousel-image-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .carousel-image {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
+        /* Full-screen image */
+        #carouselImage {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
             object-fit: contain;
+            cursor: pointer;   /* tap = next photo */
         }
 
-        .carousel-nav-button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: var(--opacity-40);
-            border: none;
-            color: white;
-            font-size: 48px;
-            padding: 20px 30px;
-            cursor: pointer;
-            z-index: 1501;
-            transition: background 0.3s ease;
-            user-select: none;
+        /* Left / Right property nav arrows */
+        .c-arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: var(--overlay-bg); border: none;
+            color: white; font-size: 48px;
+            padding: 20px 28px; cursor: pointer;
+            z-index: 10; transition: background .2s;
+            user-select: none; -webkit-user-select: none;
+        }
+        .c-arrow:hover  { background: rgba(0,0,0,.65); }
+        .c-arrow.left   { left: 10px; }
+        .c-arrow.right  { right: 10px; }
+
+        /* Top-left back button */
+        #carouselBack {
+            position: absolute; top: 16px; left: 16px; z-index: 10;
+            background: var(--overlay-bg); border: none; color: white;
+            padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
         }
 
-        .carousel-nav-button:hover {
-            background: rgba(0, 0, 0, 0.6);
+        /* Bottom info bar */
+        #carouselInfo {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: var(--overlay-bg); color: white;
+            padding: 14px 20px; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap;
+        }
+        #carouselAddress { font-size: 16px; font-weight: bold; flex: 1; }
+        #carouselCounter { font-size: 13px; opacity: .8; white-space: nowrap; }
+        .carousel-action-btns { display: flex; gap: 10px; }
+        .c-action-btn {
+            background: white; color: var(--primary);
+            border: none; padding: 8px 16px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            user-select: none; -webkit-user-select: none;
         }
 
-        .carousel-nav-button.prev {
-            left: 20px;
+        /* ── SCROLLING ───────────────────────────────────────────────── */
+        #scrollingView {
+            position: fixed; inset: 0;
+            background: #000; display: none;
+            z-index: 1500; overflow-y: auto;
+        }
+        #scrollingView.active { display: block; }
+
+        .scroll-header {
+            position: sticky; top: 0; z-index: 10;
+            background: var(--overlay-bg); color: white;
+            padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .scroll-back-btn {
+            background: transparent; border: 1px solid white;
+            color: white; padding: 8px 14px; border-radius: 6px;
+            cursor: pointer; font-size: 14px;
         }
 
-        .carousel-nav-button.next {
-            right: 20px;
+        .scroll-property {
+            position: relative; width: 100%; min-height: 100vh;
+            display: flex; align-items: flex-end;
+            border-bottom: 2px solid #222;
+        }
+        .scroll-img {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .scroll-overlay {
+            position: relative; z-index: 2;
+            width: 100%; background: var(--overlay-bg);
+            color: white; padding: 18px 20px;
+        }
+        .scroll-address { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+        .scroll-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+        .s-action-btn {
+            background: white; color: var(--primary);
+            border: none; padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            user-select: none; -webkit-user-select: none;
         }
 
-        .carousel-controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            gap: 15px;
-            z-index: 1502;
+        #mapSection {
+            padding: 40px 20px; text-align: center; background: #111;
         }
+        #mapSection h3 { color: white; margin-bottom: 20px; font-size: 18px; }
+        #mapSection .s-action-btn { font-size: 16px; padding: 14px 28px; }
 
-        .carousel-menu-button {
-            background: var(--opacity-40);
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s ease;
-        }
-
-        .carousel-menu-button:hover {
-            background: rgba(0, 0, 0, 0.6);
-        }
-
-        .carousel-property-info {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            text-align: center;
-            z-index: 1502;
-            background: var(--opacity-40);
-            padding: 15px 30px;
-            border-radius: 8px;
-        }
-
-        .carousel-address {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .carousel-counter {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        /* Scrolling Mode */
-        .scrolling-view {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: none;
-            z-index: 1500;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        .scrolling-view.active {
-            display: block;
-        }
-
-        .scrolling-header {
-            position: sticky;
-            top: 0;
-            z-index: 1502;
-            background: var(--opacity-40);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .scrolling-menu-button {
-            background: transparent;
-            border: 1px solid white;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .scrolling-menu-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .scrolling-properties {
-            padding: 0;
-        }
-
-        .scrolling-property {
-            position: relative;
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            border-bottom: 1px solid #333;
-        }
-
-        .scrolling-property-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .scrolling-property-overlay {
-            position: relative;
-            z-index: 1501;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .property-buttons {
-            position: absolute;
-            bottom: 40px;
-            display: flex;
-            gap: 20px;
-            z-index: 1502;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .property-button {
-            background: var(--opacity-40);
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s ease;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .property-button:hover {
-            background: rgba(0, 0, 0, 0.6);
-        }
-
-        .property-button:active {
-            background: rgba(0, 0, 0, 0.7);
-        }
-
-        /* Details Panel */
-        .details-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--opacity-40);
-            color: white;
-            padding: 30px;
-            border-top: 2px solid var(--accent);
+        /* ── DETAILS PANEL ──────────────────────────────────────────── */
+        #detailsPanel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(20,20,20,.95); color: white;
+            padding: 28px 24px 32px;
+            border-top: 3px solid var(--accent);
             transform: translateY(100%);
-            transition: transform 0.3s ease;
-            z-index: 1503;
-            max-height: 50vh;
-            overflow-y: auto;
+            transition: transform .25s ease;
+            z-index: 2500; max-height: 55vh; overflow-y: auto;
         }
-
-        .details-panel.visible {
-            transform: translateY(0);
-        }
-
-        .details-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: var(--accent);
-        }
-
-        .details-content {
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
+        #detailsPanel.visible { transform: translateY(0); }
         .details-close {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
+            position: absolute; top: 14px; right: 18px;
+            background: transparent; border: none; color: white;
+            font-size: 26px; cursor: pointer; line-height: 1;
         }
+        .details-title { font-size: 20px; font-weight: bold; margin-bottom: 14px; color: var(--accent); }
+        .details-content { font-size: 15px; line-height: 1.7; }
+        .details-content p { margin-bottom: 6px; }
 
-        /* Map View */
-        .map-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            z-index: 1504;
-            display: none;
-        }
-
-        .map-panel.visible {
-            display: flex;
+        /* ── MAP PANEL ──────────────────────────────────────────────── */
+        #mapPanel {
+            position: fixed; inset: 0;
+            background: white; z-index: 2600; display: none;
             flex-direction: column;
         }
-
+        #mapPanel.visible { display: flex; }
         .map-header {
-            background: var(--primary);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .map-close {
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        #googleMap {
-            flex: 1;
-        }
-
-        .map-marker-info {
-            background: white;
-            padding: 20px;
-            font-size: 16px;
+            background: var(--primary); color: white;
+            padding: 14px 20px;
+            display: flex; justify-content: space-between; align-items: center;
             font-weight: bold;
-            color: var(--primary);
         }
-
-        @media (max-width: 768px) {
-            .menu-buttons {
-                flex-direction: column;
-                gap: 20px;
-                padding: 20px;
-            }
-
-            .mode-button {
-                min-width: 160px;
-                padding: 15px 30px;
-                font-size: 18px;
-            }
-
-            .carousel-nav-button {
-                padding: 15px 20px;
-                font-size: 36px;
-            }
-
-            .carousel-nav-button.prev {
-                left: 10px;
-            }
-
-            .carousel-nav-button.next {
-                right: 10px;
-            }
-
-            .welcome-title {
-                font-size: 36px;
-            }
-
-            .menu-title {
-                font-size: 36px;
-                padding: 20px;
-            }
-
-            .property-buttons {
-                bottom: 20px;
-                gap: 15px;
-            }
-
-            .property-button {
-                padding: 10px 18px;
-                font-size: 14px;
-            }
-
-            .details-panel {
-                padding: 20px;
-            }
+        .map-close {
+            background: transparent; border: none;
+            color: white; font-size: 26px; cursor: pointer;
         }
+        #googleMap { flex: 1; }
 
+        /* ── RESPONSIVE ─────────────────────────────────────────────── */
         @media (max-width: 480px) {
-            .carousel-controls {
-                flex-direction: column;
-                top: 10px;
-                left: 10px;
-                gap: 10px;
-            }
-
-            .carousel-menu-button {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-
-            .carousel-property-info {
-                bottom: 60px;
-                padding: 10px 20px;
-            }
-
-            .carousel-address {
-                font-size: 14px;
-            }
-
-            .carousel-counter {
-                font-size: 12px;
-            }
-
-            .property-buttons {
-                bottom: 15px;
-                gap: 10px;
-            }
-
-            .property-button {
-                padding: 8px 14px;
-                font-size: 12px;
-            }
+            .welcome-title  { font-size: 36px; }
+            .menu-title     { font-size: 32px; padding: 20px; }
+            .mode-btn       { min-width: 160px; padding: 14px 24px; font-size: 17px; }
+            .c-arrow        { font-size: 36px; padding: 14px 18px; }
+            #carouselAddress { font-size: 14px; }
         }
     </style>
 </head>
 <body>
-    <!-- Welcome Overlay -->
-    <div class="welcome-overlay" id="welcomeOverlay">
-        <div class="welcome-content">
-            <div class="welcome-logo">🏠</div>
-            <div class="welcome-title">Familia Barbosa</div>
-            <div class="welcome-subtitle">210 Realty Group</div>
-            <div class="welcome-subtitle" style="font-size: 18px; margin-top: 20px;">Premium Properties Showcase</div>
+
+<!-- ── WELCOME ─────────────────────────────────────────────── -->
+<div id="welcomeOverlay">
+    <div class="welcome-content">
+        <div class="welcome-logo">🏠</div>
+        <div class="welcome-title">Familia Barbosa</div>
+        <div class="welcome-sub">210 Realty Group</div>
+        <div class="welcome-sub" style="font-size:18px;margin-top:12px;">Premium Properties Showcase</div>
+    </div>
+</div>
+
+<!-- ── MENU ───────────────────────────────────────────────── -->
+<div id="menuOverlay">
+    <div class="menu-title">Selecciona tu modo</div>
+    <div class="menu-buttons">
+        <button class="mode-btn" onclick="startCarouselMode()">Carrusel →</button>
+        <button class="mode-btn" onclick="startScrollingMode()">Scrolling ↓</button>
+    </div>
+</div>
+
+<!-- ── CAROUSEL ───────────────────────────────────────────── -->
+<div id="carouselView">
+    <!-- Full-screen image (tap = next photo within property) -->
+    <img id="carouselImage" src="" alt="Property" onclick="nextPhoto()">
+
+    <!-- Back -->
+    <button id="carouselBack" onclick="backToMenu()">← Menú</button>
+
+    <!-- Property navigation arrows -->
+    <button class="c-arrow left"  onclick="prevProperty()" title="Propiedad anterior">❮</button>
+    <button class="c-arrow right" onclick="nextProperty()" title="Siguiente propiedad">❯</button>
+
+    <!-- Info + action buttons at bottom -->
+    <div id="carouselInfo">
+        <div id="carouselAddress"></div>
+        <div id="carouselCounter"></div>
+        <div class="carousel-action-btns">
+            <button class="c-action-btn" id="cMapBtn">🗺 Mapa</button>
+            <button class="c-action-btn" id="cDetailsBtn">📋 Detalles</button>
         </div>
     </div>
+</div>
 
-    <!-- Menu Overlay -->
-    <div class="menu-overlay" id="menuOverlay">
-        <div class="menu-title">Selecciona tu modo</div>
-        <div class="menu-buttons">
-            <button class="mode-button" onclick="startCarouselMode()">Carrusel →</button>
-            <button class="mode-button" onclick="startScrollingMode()">Scrolling ↓</button>
-        </div>
+<!-- ── SCROLLING ──────────────────────────────────────────── -->
+<div id="scrollingView">
+    <div class="scroll-header">
+        <span style="font-size:18px;font-weight:bold;">Propiedades</span>
+        <button class="scroll-back-btn" onclick="backToMenu()">← Menú</button>
     </div>
-
-    <!-- Carousel Mode -->
-    <div class="carousel-view" id="carouselView">
-        <div class="carousel-controls">
-            <button class="carousel-menu-button" onclick="backToMenu()">← Menú</button>
-        </div>
-        <div class="carousel-container">
-            <button class="carousel-nav-button prev" onclick="prevProperty()">❮</button>
-            <div class="carousel-image-wrapper">
-                <img class="carousel-image" id="carouselImage" src="" alt="Property">
-            </div>
-            <button class="carousel-nav-button next" onclick="nextProperty()">❯</button>
-        </div>
-        <div class="carousel-property-info">
-            <div class="carousel-address" id="carouselAddress"></div>
-            <div class="carousel-counter">
-                <span id="carouselPropertyIndex">1</span> / <span id="carouselPropertyTotal">12</span>
-            </div>
-        </div>
+    <div id="scrollingProperties"></div>
+    <div id="mapSection">
+        <h3>Ver todas las propiedades en el mapa</h3>
+        <button class="s-action-btn" onclick="showAllPropertiesMap()">🗺 Abrir Mapa</button>
     </div>
+</div>
 
-    <!-- Scrolling Mode -->
-    <div class="scrolling-view" id="scrollingView">
-        <div class="scrolling-header">
-            <span style="font-size: 18px; font-weight: bold;">Propiedades</span>
-            <button class="scrolling-menu-button" onclick="backToMenu()">Menú →</button>
-        </div>
-        <div class="scrolling-properties" id="scrollingProperties"></div>
-        <div class="scrolling-property" id="mapSection" style="min-height: auto; padding: 40px 20px;">
-            <div style="text-align: center; color: white;">
-                <h3 style="margin-bottom: 20px;">Ver todas las propiedades en el mapa</h3>
-                <button class="property-button" onclick="showAllPropertiesMap()">Abrir Mapa</button>
-            </div>
-        </div>
+<!-- ── DETAILS PANEL ──────────────────────────────────────── -->
+<div id="detailsPanel">
+    <button class="details-close" onclick="hideDetails()">×</button>
+    <div class="details-title" id="detailsTitle"></div>
+    <div class="details-content" id="detailsContent"></div>
+</div>
+
+<!-- ── MAP PANEL ─────────────────────────────────────────── -->
+<div id="mapPanel">
+    <div class="map-header">
+        <span id="mapTitle">Mapa de Propiedades</span>
+        <button class="map-close" onclick="closeMap()">×</button>
     </div>
+    <div id="googleMap"></div>
+</div>
 
-    <!-- Details Panel -->
-    <div class="details-panel" id="detailsPanel">
-        <button class="details-close" onclick="hideDetails()">&times;</button>
-        <div class="details-title" id="detailsTitle"></div>
-        <div class="details-content" id="detailsContent"></div>
-    </div>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const properties = [
+    { id:1,  address:"117 Farming Grv, Boerne TX 78006",             folder:"117_Farming_Grv_Boerne",           images:44, lat:29.8044,  lng:-98.7598, beds:4, baths:3,   sqft:3800 },
+    { id:2,  address:"5226 Breeze Way, San Antonio TX 78249",         folder:"5226_Breeze_Way_San_Antonio",       images:50, lat:29.5826,  lng:-98.5282, beds:3, baths:2,   sqft:2800 },
+    { id:3,  address:"24318 Canyon Row, San Antonio TX 78260",        folder:"24318_Canyon_Row_San_Antonio",      images:43, lat:29.5421,  lng:-98.6205, beds:4, baths:3.5, sqft:3400 },
+    { id:4,  address:"7110 Avignon Forest, San Antonio TX 78256",     folder:"7110_Avignon_Forest_San_Antonio",  images:11, lat:29.5645,  lng:-98.5834, beds:3, baths:2.5, sqft:2500 },
+    { id:5,  address:"7114 Avignon Forest, San Antonio TX 78256",     folder:"7114_Avignon_Forest_San_Antonio",  images:3,  lat:29.5645,  lng:-98.5838, beds:3, baths:2,   sqft:2400 },
+    { id:6,  address:"7118 Avignon Forest, San Antonio TX 78256",     folder:"7118_Avignon_Forest_San_Antonio",  images:3,  lat:29.5645,  lng:-98.5842, beds:3, baths:2,   sqft:2400 },
+    { id:7,  address:"7122 Avignon Forest, San Antonio TX 78256",     folder:"7122_Avignon_Forest_San_Antonio",  images:3,  lat:29.5645,  lng:-98.5846, beds:3, baths:2,   sqft:2400 },
+    { id:8,  address:"311 Canyon Path, San Antonio TX 78258",         folder:"311_Canyon_Path_San_Antonio",      images:4,  lat:29.5512,  lng:-98.6084, beds:2, baths:2,   sqft:1800 },
+    { id:9,  address:"315 Canyon Path, San Antonio TX 78258",         folder:"315_Canyon_Path_San_Antonio",      images:4,  lat:29.5513,  lng:-98.6088, beds:2, baths:2,   sqft:1800 },
+    { id:10, address:"319 Canyon Path, San Antonio TX 78258",         folder:"319_Canyon_Path_San_Antonio",      images:4,  lat:29.5514,  lng:-98.6092, beds:2, baths:2,   sqft:1800 },
+    { id:11, address:"23347 Grande Vista, San Antonio TX 78261",      folder:"23347_Grande_Vista_San_Antonio",   images:2,  lat:29.4901,  lng:-98.6234, beds:3, baths:2.5, sqft:2200 },
+    { id:12, address:"23358 Grande Vista, San Antonio TX 78261",      folder:"23358_Grande_Vista_San_Antonio",   images:4,  lat:29.4902,  lng:-98.6238, beds:3, baths:2,   sqft:2100 }
+];
 
-    <!-- Map Panel -->
-    <div class="map-panel" id="mapPanel">
-        <div class="map-header">
-            <span style="font-weight: bold;">Mapa de Propiedades</span>
-            <button class="map-close" onclick="closeMap()">&times;</button>
-        </div>
-        <div id="googleMap" style="flex: 1;"></div>
-    </div>
+const basePath = '/public/';
+let currentMode = null;
+let currentPropertyIndex = 0;
+let currentImageIndex    = 0;
+let currentImages        = [];
+let map = null, markers = [];
+let mapAutoCloseTimer = null;
 
-    <script>
-        const properties = [
-            {
-                id: 1,
-                address: "117 Farming Grv, Boerne TX 78006",
-                folder: "117_Farming_Grv_Boerne",
-                images: 44,
-                lat: 29.8044,
-                lng: -98.7598,
-                beds: 4,
-                baths: 3,
-                sqft: 3800
-            },
-            {
-                id: 2,
-                address: "5226 Breeze Way, San Antonio TX 78249",
-                folder: "5226_Breeze_Way_San_Antonio",
-                images: 50,
-                lat: 29.5826,
-                lng: -98.5282,
-                beds: 3,
-                baths: 2,
-                sqft: 2800
-            },
-            {
-                id: 3,
-                address: "24318 Canyon Row, San Antonio TX 78260",
-                folder: "24318_Canyon_Row_San_Antonio",
-                images: 43,
-                lat: 29.5421,
-                lng: -98.6205,
-                beds: 4,
-                baths: 3.5,
-                sqft: 3400
-            },
-            {
-                id: 4,
-                address: "7110 Avignon Forest, San Antonio TX 78256",
-                folder: "7110_Avignon_Forest_San_Antonio",
-                images: 11,
-                lat: 29.5645,
-                lng: -98.5834,
-                beds: 3,
-                baths: 2.5,
-                sqft: 2500
-            },
-            {
-                id: 5,
-                address: "7114 Avignon Forest, San Antonio TX 78256",
-                folder: "7114_Avignon_Forest_San_Antonio",
-                images: 3,
-                lat: 29.5645,
-                lng: -98.5838,
-                beds: 3,
-                baths: 2,
-                sqft: 2400
-            },
-            {
-                id: 6,
-                address: "7118 Avignon Forest, San Antonio TX 78256",
-                folder: "7118_Avignon_Forest_San_Antonio",
-                images: 3,
-                lat: 29.5645,
-                lng: -98.5842,
-                beds: 3,
-                baths: 2,
-                sqft: 2400
-            },
-            {
-                id: 7,
-                address: "7122 Avignon Forest, San Antonio TX 78256",
-                folder: "7122_Avignon_Forest_San_Antonio",
-                images: 3,
-                lat: 29.5645,
-                lng: -98.5846,
-                beds: 3,
-                baths: 2,
-                sqft: 2400
-            },
-            {
-                id: 8,
-                address: "311 Canyon Path, San Antonio TX 78258",
-                folder: "311_Canyon_Path_San_Antonio",
-                images: 4,
-                lat: 29.5512,
-                lng: -98.6084,
-                beds: 2,
-                baths: 2,
-                sqft: 1800
-            },
-            {
-                id: 9,
-                address: "315 Canyon Path, San Antonio TX 78258",
-                folder: "315_Canyon_Path_San_Antonio",
-                images: 4,
-                lat: 29.5513,
-                lng: -98.6088,
-                beds: 2,
-                baths: 2,
-                sqft: 1800
-            },
-            {
-                id: 10,
-                address: "319 Canyon Path, San Antonio TX 78258",
-                folder: "319_Canyon_Path_San_Antonio",
-                images: 4,
-                lat: 29.5514,
-                lng: -98.6092,
-                beds: 2,
-                baths: 2,
-                sqft: 1800
-            },
-            {
-                id: 11,
-                address: "23347 Grande Vista, San Antonio TX 78261",
-                folder: "23347_Grande_Vista_San_Antonio",
-                images: 2,
-                lat: 29.4901,
-                lng: -98.6234,
-                beds: 3,
-                baths: 2.5,
-                sqft: 2200
-            },
-            {
-                id: 12,
-                address: "23358 Grande Vista, San Antonio TX 78261",
-                folder: "23358_Grande_Vista_San_Antonio",
-                images: 4,
-                lat: 29.4902,
-                lng: -98.6238,
-                beds: 3,
-                baths: 2,
-                sqft: 2100
-            }
-        ];
+// ── WELCOME: remove overlay after animation so it never blocks clicks ─────────
+setTimeout(() => {
+    const el = document.getElementById('welcomeOverlay');
+    if (el) el.style.display = 'none';
+}, 5100);  // 5s animation + tiny buffer
 
-        const basePath = '/public/';
-        let currentMode = null;
-        let currentPropertyIndex = 0;
-        let currentImageIndex = 0;
-        let currentImages = [];
-        let map = null;
-        let markers = [];
-        let pressTimer = null;
-        let isHoldingMap = false;
+// ── MODE SWITCHERS ────────────────────────────────────────────────────────────
+function startCarouselMode() {
+    currentMode = 'carousel';
+    currentPropertyIndex = 0;
+    currentImageIndex    = 0;
+    document.getElementById('menuOverlay').classList.add('hidden');
+    document.getElementById('carouselView').classList.add('active');
+    loadCarouselImages();
+}
 
-        // Hide menu after 5 seconds (triggered by welcome animation end)
-        setTimeout(() => {
-            document.getElementById('welcomeOverlay').addEventListener('animationend', () => {
-                // Menu is shown by default
-            }, { once: true });
-        }, 5000);
+function startScrollingMode() {
+    currentMode = 'scrolling';
+    document.getElementById('menuOverlay').classList.add('hidden');
+    document.getElementById('scrollingView').classList.add('active');
+    buildScrollingView();
+}
 
-        function startCarouselMode() {
-            currentMode = 'carousel';
-            currentPropertyIndex = 0;
-            document.getElementById('menuOverlay').classList.add('hidden');
-            document.getElementById('carouselView').classList.add('active');
-            loadCarouselImages();
-        }
+function backToMenu() {
+    document.getElementById('carouselView').classList.remove('active');
+    document.getElementById('scrollingView').classList.remove('active');
+    hideDetails();
+    closeMap();
+    currentMode = null;
+    document.getElementById('menuOverlay').classList.remove('hidden');
+}
 
-        function startScrollingMode() {
-            currentMode = 'scrolling';
-            document.getElementById('menuOverlay').classList.add('hidden');
-            document.getElementById('scrollingView').classList.add('active');
-            buildScrollingView();
-        }
+// ── CAROUSEL ──────────────────────────────────────────────────────────────────
+function loadCarouselImages() {
+    const prop = properties[currentPropertyIndex];
+    currentImages = [];
+    for (let i = 1; i <= prop.images; i++) {
+        const n = String(i).padStart(2, '0');
+        currentImages.push(`${basePath}${prop.folder}/${prop.folder}_${n}.jpg`);
+    }
+    currentImageIndex = 0;
+    renderCarouselImage();
+}
 
-        function backToMenu() {
-            document.getElementById('carouselView').classList.remove('active');
-            document.getElementById('scrollingView').classList.remove('active');
-            hideDetails();
-            currentMode = null;
-            document.getElementById('menuOverlay').classList.remove('hidden');
-        }
+function renderCarouselImage() {
+    const prop = properties[currentPropertyIndex];
+    document.getElementById('carouselImage').src = currentImages[currentImageIndex];
+    document.getElementById('carouselAddress').textContent = prop.address;
+    document.getElementById('carouselCounter').textContent =
+        `Prop. ${currentPropertyIndex + 1}/${properties.length}  ·  Foto ${currentImageIndex + 1}/${currentImages.length}`;
+}
 
-        // CAROUSEL MODE
-        function loadCarouselImages() {
+function nextProperty() {
+    currentPropertyIndex = (currentPropertyIndex + 1) % properties.length;
+    loadCarouselImages();
+}
+
+function prevProperty() {
+    currentPropertyIndex = (currentPropertyIndex - 1 + properties.length) % properties.length;
+    loadCarouselImages();
+}
+
+// Tap on image → cycle photos within current property
+function nextPhoto() {
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    renderCarouselImage();
+}
+
+// ── CAROUSEL BUTTON SETUP (called once on DOMContentLoaded) ──────────────────
+function setupCarouselButtons() {
+    // MAPA — press = single property snapshot; hold 4 s = all properties
+    attachPressHold(
+        document.getElementById('cMapBtn'),
+        // onPress:
+        () => {
             const prop = properties[currentPropertyIndex];
-            currentImages = [];
-            for (let i = 1; i <= prop.images; i++) {
-                const num = String(i).padStart(2, '0');
-                currentImages.push(`${basePath}${prop.folder}/${prop.folder}_${num}.jpg`);
-            }
-            currentImageIndex = 0;
-            showCarouselImage();
-        }
-
-        function showCarouselImage() {
-            if (currentImages.length === 0) return;
-            document.getElementById('carouselImage').src = currentImages[currentImageIndex];
-            document.getElementById('carouselAddress').textContent = properties[currentPropertyIndex].address;
-            document.getElementById('carouselPropertyIndex').textContent = currentPropertyIndex + 1;
-            document.getElementById('carouselPropertyTotal').textContent = properties.length;
-        }
-
-        function nextProperty() {
-            currentPropertyIndex = (currentPropertyIndex + 1) % properties.length;
-            loadCarouselImages();
-        }
-
-        function prevProperty() {
-            currentPropertyIndex = (currentPropertyIndex - 1 + properties.length) % properties.length;
-            loadCarouselImages();
-        }
-
-        // SCROLLING MODE
-        function buildScrollingView() {
-            const container = document.getElementById('scrollingProperties');
-            container.innerHTML = '';
-
-            properties.forEach((prop, index) => {
-                const propDiv = document.createElement('div');
-                propDiv.className = 'scrolling-property';
-                propDiv.id = `property-${prop.id}`;
-
-                const imageUrl = `${basePath}${prop.folder}/${prop.folder}_01.jpg`;
-
-                propDiv.innerHTML = `
-                    <img class="scrolling-property-image" src="${imageUrl}" alt="${prop.address}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%221%22 height=%221%22%3E%3C/svg%3E'">
-                    <div class="scrolling-property-overlay">
-                        <div class="property-buttons">
-                            <button class="property-button" onmousedown="startMapPress(event, ${prop.id})" onmouseup="endMapPress()" ontouchstart="startMapPress(event, ${prop.id})" ontouchend="endMapPress()" onmouseleave="endMapPress()">Mapa</button>
-                            <button class="property-button" onmousedown="startDetailsPress(event, ${prop.id})" onmouseup="endDetailsPress()" ontouchstart="startDetailsPress(event, ${prop.id})" ontouchend="endDetailsPress()" onmouseleave="endDetailsPress()">Más detalles</button>
-                        </div>
-                    </div>
-                `;
-
-                container.appendChild(propDiv);
-            });
-        }
-
-        // PRESS/HOLD HANDLERS
-        function startMapPress(e, propId) {
-            const prop = properties.find(p => p.id === propId);
-            pressTimer = setTimeout(() => {
-                isHoldingMap = true;
-                showAllPropertiesMap();
-            }, 4000);
-            // Short press shows location snapshot
-            setTimeout(() => {
-                if (!isHoldingMap && pressTimer) {
-                    showPropertyLocation(prop);
-                }
-            }, 100);
-        }
-
-        function endMapPress() {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
-            isHoldingMap = false;
-        }
-
-        function startDetailsPress(e, propId) {
-            const prop = properties.find(p => p.id === propId);
-            pressTimer = setTimeout(() => {
-                showDetails(prop);
-            }, 100);
-        }
-
-        function endDetailsPress() {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
+            showPropertyMap(prop, /*singleProp*/ true);
+        },
+        // onHold (4 s):
+        () => {
+            cancelMapAutoClose();
+            closeMap();
+            showAllPropertiesMap();
+        },
+        // onRelease (after short press, auto-close after 3 s):
+        (wasHeld) => {
+            if (!wasHeld) {
+                mapAutoCloseTimer = setTimeout(closeMap, 3000);
             }
         }
+    );
 
-        function showDetails(prop) {
-            document.getElementById('detailsTitle').textContent = prop.address;
-            document.getElementById('detailsContent').innerHTML = `
-                <p><strong>Dormitorios:</strong> ${prop.beds}</p>
-                <p><strong>Baños:</strong> ${prop.baths}</p>
-                <p><strong>Área (sqft):</strong> ${prop.sqft.toLocaleString()}</p>
-                <p><strong>Imágenes:</strong> ${prop.images}</p>
-            `;
-            document.getElementById('detailsPanel').classList.add('visible');
+    // DETALLES — hold = show, release = hide
+    const detBtn = document.getElementById('cDetailsBtn');
+    addPressRelease(
+        detBtn,
+        () => showDetails(properties[currentPropertyIndex]),
+        () => hideDetails()
+    );
+}
+
+// ── SCROLLING ─────────────────────────────────────────────────────────────────
+function buildScrollingView() {
+    const container = document.getElementById('scrollingProperties');
+    container.innerHTML = '';
+
+    properties.forEach(prop => {
+        const div = document.createElement('div');
+        div.className = 'scroll-property';
+        div.id = `sp-${prop.id}`;
+
+        const imgUrl = `${basePath}${prop.folder}/${prop.folder}_01.jpg`;
+        div.innerHTML = `
+            <img class="scroll-img" src="${imgUrl}" alt="${prop.address}"
+                 onerror="this.style.opacity='0'">
+            <div class="scroll-overlay">
+                <div class="scroll-address">${prop.address}</div>
+                <div class="scroll-btns">
+                    <button class="s-action-btn" id="smap-${prop.id}">🗺 Mapa</button>
+                    <button class="s-action-btn" id="sdet-${prop.id}">📋 Detalles</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+
+        // Wire up buttons after appending
+        const mapBtn = div.querySelector(`#smap-${prop.id}`);
+        const detBtn = div.querySelector(`#sdet-${prop.id}`);
+
+        attachPressHold(
+            mapBtn,
+            () => showPropertyMap(prop, true),
+            () => { cancelMapAutoClose(); closeMap(); showAllPropertiesMap(); },
+            (wasHeld) => { if (!wasHeld) mapAutoCloseTimer = setTimeout(closeMap, 3000); }
+        );
+
+        addPressRelease(
+            detBtn,
+            () => showDetails(prop),
+            () => hideDetails()
+        );
+    });
+}
+
+// ── PRESS / HOLD / RELEASE HELPERS ───────────────────────────────────────────
+/**
+ * Attach press-hold behavior to a button.
+ * onPress fires immediately; onHold fires after holdMs; onRelease fires on up/leave.
+ */
+function attachPressHold(btn, onPress, onHold, onRelease, holdMs = 4000) {
+    let timer = null;
+    let held  = false;
+
+    function start(e) {
+        e.preventDefault();
+        held = false;
+        onPress();
+        timer = setTimeout(() => { held = true; onHold(); }, holdMs);
+    }
+    function end(e) {
+        if (timer) { clearTimeout(timer); timer = null; }
+        onRelease(held);
+        held = false;
+    }
+
+    btn.addEventListener('mousedown',  start);
+    btn.addEventListener('touchstart', start, { passive: false });
+    btn.addEventListener('mouseup',    end);
+    btn.addEventListener('touchend',   end);
+    btn.addEventListener('mouseleave', end);
+}
+
+/**
+ * Show on press, hide on release.
+ */
+function addPressRelease(btn, onPress, onRelease) {
+    function start(e) { e.preventDefault(); onPress(); }
+    function end()    { onRelease(); }
+    btn.addEventListener('mousedown',  start);
+    btn.addEventListener('touchstart', start, { passive: false });
+    btn.addEventListener('mouseup',    end);
+    btn.addEventListener('touchend',   end);
+    btn.addEventListener('mouseleave', end);
+}
+
+// ── DETAILS ──────────────────────────────────────────────────────────────────
+function showDetails(prop) {
+    document.getElementById('detailsTitle').textContent = prop.address;
+    document.getElementById('detailsContent').innerHTML = `
+        <p><strong>Dormitorios:</strong> ${prop.beds}</p>
+        <p><strong>Baños:</strong> ${prop.baths}</p>
+        <p><strong>Área:</strong> ${prop.sqft.toLocaleString()} sqft</p>
+        <p><strong>Fotos disponibles:</strong> ${prop.images}</p>
+    `;
+    document.getElementById('detailsPanel').classList.add('visible');
+}
+function hideDetails() {
+    document.getElementById('detailsPanel').classList.remove('visible');
+}
+
+// ── MAP ───────────────────────────────────────────────────────────────────────
+function initMap() {
+    if (map) return;
+    map = new google.maps.Map(document.getElementById('googleMap'), {
+        zoom: 12,
+        center: { lat: 29.54, lng: -98.60 },
+        mapTypeControl: true, fullscreenControl: false
+    });
+}
+
+function showPropertyMap(prop, isSingle) {
+    initMap();
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+
+    const pos = { lat: prop.lat, lng: prop.lng };
+    const marker = new google.maps.Marker({ position: pos, map, title: prop.address });
+    markers.push(marker);
+    map.setCenter(pos);
+    map.setZoom(16);
+
+    document.getElementById('mapTitle').textContent = prop.address;
+    document.getElementById('mapPanel').classList.add('visible');
+    google.maps.event.trigger(map, 'resize');
+    map.setCenter(pos);
+}
+
+function showAllPropertiesMap() {
+    initMap();
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+
+    const bounds = new google.maps.LatLngBounds();
+    properties.forEach(prop => {
+        const pos = { lat: prop.lat, lng: prop.lng };
+        const marker = new google.maps.Marker({ position: pos, map, title: prop.address });
+        markers.push(marker);
+        bounds.extend(pos);
+    });
+    map.fitBounds(bounds);
+
+    document.getElementById('mapTitle').textContent = 'Todas las propiedades';
+    document.getElementById('mapPanel').classList.add('visible');
+    google.maps.event.trigger(map, 'resize');
+    map.fitBounds(bounds);
+}
+
+function closeMap() {
+    cancelMapAutoClose();
+    document.getElementById('mapPanel').classList.remove('visible');
+}
+
+function cancelMapAutoClose() {
+    if (mapAutoCloseTimer) { clearTimeout(mapAutoCloseTimer); mapAutoCloseTimer = null; }
+}
+
+// ── SWIPE (carousel) ─────────────────────────────────────────────────────────
+(function initSwipe() {
+    let sx = 0, sy = 0;
+    const view = document.getElementById('carouselView');
+
+    view.addEventListener('touchstart', e => {
+        sx = e.touches[0].clientX;
+        sy = e.touches[0].clientY;
+    }, { passive: true });
+
+    view.addEventListener('touchend', e => {
+        if (currentMode !== 'carousel') return;
+        const dx = e.changedTouches[0].clientX - sx;
+        const dy = e.changedTouches[0].clientY - sy;
+        // Ignore if touch originated on a button
+        if (e.target.closest('button')) return;
+        // Horizontal swipe threshold
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            dx < 0 ? nextProperty() : prevProperty();
         }
+        // Pure tap (very little movement) is handled by the img onclick → nextPhoto()
+    }, { passive: true });
+})();
 
-        function hideDetails() {
-            document.getElementById('detailsPanel').classList.remove('visible');
-        }
+// ── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if (currentMode === 'carousel') {
+        if (e.key === 'ArrowRight') nextProperty();
+        if (e.key === 'ArrowLeft')  prevProperty();
+        if (e.key === ' ' || e.key === 'ArrowDown') nextPhoto();
+    }
+    if (e.key === 'Escape') {
+        if (document.getElementById('mapPanel').classList.contains('visible')) closeMap();
+        else if (document.getElementById('detailsPanel').classList.contains('visible')) hideDetails();
+        else if (currentMode) backToMenu();
+    }
+});
 
-        function showPropertyLocation(prop) {
-            if (!map) {
-                initMap();
-            }
-            map.setCenter({ lat: prop.lat, lng: prop.lng });
-            map.setZoom(15);
-
-            // Clear other markers
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-
-            // Add marker for this property
-            const marker = new google.maps.Marker({
-                position: { lat: prop.lat, lng: prop.lng },
-                map: map,
-                title: prop.address
-            });
-            markers.push(marker);
-
-            document.getElementById('mapPanel').classList.add('visible');
-            setTimeout(() => {
-                document.getElementById('mapPanel').classList.remove('visible');
-            }, 3000);
-        }
-
-        function showAllPropertiesMap() {
-            if (!map) {
-                initMap();
-            }
-
-            // Clear markers
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-
-            // Add markers for all properties
-            properties.forEach(prop => {
-                const marker = new google.maps.Marker({
-                    position: { lat: prop.lat, lng: prop.lng },
-                    map: map,
-                    title: prop.address
-                });
-                markers.push(marker);
-            });
-
-            // Center map on all markers
-            if (markers.length > 0) {
-                const bounds = new google.maps.LatLngBounds();
-                markers.forEach(marker => bounds.extend(marker.getPosition()));
-                map.fitBounds(bounds);
-            }
-
-            document.getElementById('mapPanel').classList.add('visible');
-        }
-
-        function closeMap() {
-            document.getElementById('mapPanel').classList.remove('visible');
-        }
-
-        function initMap() {
-            const mapContainer = document.getElementById('googleMap');
-            const center = { lat: 29.5, lng: -98.6 };
-            map = new google.maps.Map(mapContainer, {
-                zoom: 12,
-                center: center,
-                mapTypeControl: true,
-                fullscreenControl: true
-            });
-        }
-
-        // KEYBOARD NAVIGATION
-        document.addEventListener('keydown', (e) => {
-            if (!currentMode) return;
-
-            if (currentMode === 'carousel') {
-                if (e.key === 'ArrowRight') nextProperty();
-                if (e.key === 'ArrowLeft') prevProperty();
-            }
-
-            if (e.key === 'Escape') {
-                hideDetails();
-                if (currentMode) backToMenu();
-            }
-        });
-
-        // Initialize
-        window.addEventListener('load', () => {
-            // Menu shown after welcome animation (5s)
-        });
-    </script>
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', setupCarouselButtons);
+</script>
 </body>
 </html>
-<!-- Deploy -->
-<!-- Deploy -->
