@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Familia Barbosa - 210 Realty Group Property Showcase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -158,6 +160,23 @@
             user-select: none; -webkit-user-select: none;
         }
 
+        .s-dismiss-btn {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            user-select: none; -webkit-user-select: none;
+        }
+        .s-dismiss-btn.dismissed {
+            background: rgba(220,38,38,0.7); border-color: rgba(220,38,38,0.9);
+        }
+        .scroll-property.dismissed-card { opacity: 0.35; }
+        .scroll-reset-btn {
+            background: var(--accent); color: white;
+            border: none; padding: 8px 14px; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 600; display: none;
+        }
+
         #mapSection {
             padding: 40px 20px; text-align: center; background: #111;
         }
@@ -201,7 +220,7 @@
             background: transparent; border: none;
             color: white; font-size: 26px; cursor: pointer;
         }
-        #googleMapFrame { flex: 1; border: 0; }
+        #googleMap { flex: 1; }
 
         /* ── 210 REALTY LOGO ────────────────────────────────────────── */
         .realty-logo {
@@ -272,7 +291,10 @@
 <div id="scrollingView">
     <div class="scroll-header">
         <span style="font-size:18px;font-weight:bold;">Propiedades</span>
-        <button class="scroll-back-btn" onclick="backToMenu()">← Menú</button>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <button class="scroll-reset-btn" id="resetBtn" onclick="resetDismissed()">↺ Restaurar todas</button>
+            <button class="scroll-back-btn" onclick="backToMenu()">← Menú</button>
+        </div>
     </div>
     <div id="scrollingProperties"></div>
     <div id="mapSection">
@@ -294,7 +316,7 @@
         <span id="mapTitle">Mapa de Propiedades</span>
         <button class="map-close" onclick="closeMap()">×</button>
     </div>
-    <iframe id="googleMapFrame" src="" width="100%" height="100%" style="border:0;flex:1;" allowfullscreen loading="lazy"></iframe>
+    <div id="googleMap"></div>
 </div>
 
 <script>
@@ -319,7 +341,9 @@ let currentMode = null;
 let currentPropertyIndex = 0;
 let currentImageIndex    = 0;
 let currentImages        = [];
+let map = null, markers = [];
 let mapAutoCloseTimer = null;
+const dismissedProperties = new Set();
 
 // ── WELCOME: remove overlay after animation so it never blocks clicks ─────────
 setTimeout(() => {
@@ -428,8 +452,9 @@ function buildScrollingView() {
     container.innerHTML = '';
 
     properties.forEach(prop => {
+        const isDismissed = dismissedProperties.has(prop.id);
         const div = document.createElement('div');
-        div.className = 'scroll-property';
+        div.className = 'scroll-property' + (isDismissed ? ' dismissed-card' : '');
         div.id = `sp-${prop.id}`;
 
         const imgUrl = `${basePath}${prop.folder}/${prop.folder}_01.jpg`;
@@ -441,6 +466,9 @@ function buildScrollingView() {
                 <div class="scroll-btns">
                     <button class="s-action-btn" id="smap-${prop.id}">🗺 Mapa</button>
                     <button class="s-action-btn" id="sdet-${prop.id}">📋 Detalles</button>
+                    <button class="s-dismiss-btn${isDismissed ? ' dismissed' : ''}" id="sdis-${prop.id}">
+                        ${isDismissed ? '✓ No interesa' : '✕ No me interesa'}
+                    </button>
                 </div>
             </div>
         `;
@@ -449,6 +477,7 @@ function buildScrollingView() {
         // Wire up buttons after appending
         const mapBtn = div.querySelector(`#smap-${prop.id}`);
         const detBtn = div.querySelector(`#sdet-${prop.id}`);
+        const disBtn = div.querySelector(`#sdis-${prop.id}`);
 
         attachPressHold(
             mapBtn,
@@ -462,7 +491,36 @@ function buildScrollingView() {
             () => showDetails(prop),
             () => hideDetails()
         );
+
+        disBtn.addEventListener('click', () => toggleDismiss(prop.id));
     });
+
+    updateResetBtn();
+}
+
+function toggleDismiss(propId) {
+    if (dismissedProperties.has(propId)) {
+        dismissedProperties.delete(propId);
+    } else {
+        dismissedProperties.add(propId);
+    }
+    const isDismissed = dismissedProperties.has(propId);
+    const card = document.getElementById(`sp-${propId}`);
+    const btn  = document.getElementById(`sdis-${propId}`);
+    card.classList.toggle('dismissed-card', isDismissed);
+    btn.classList.toggle('dismissed', isDismissed);
+    btn.textContent = isDismissed ? '✓ No interesa' : '✕ No me interesa';
+    updateResetBtn();
+}
+
+function resetDismissed() {
+    dismissedProperties.clear();
+    buildScrollingView();
+}
+
+function updateResetBtn() {
+    document.getElementById('resetBtn').style.display =
+        dismissedProperties.size > 0 ? 'block' : 'none';
 }
 
 // ── PRESS / HOLD / RELEASE HELPERS ───────────────────────────────────────────
@@ -522,19 +580,40 @@ function hideDetails() {
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
+function initMap() {
+    if (map) return;
+    map = L.map('googleMap').setView([29.54, -98.60], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+}
+
 function showPropertyMap(prop, isSingle) {
-    const address = encodeURIComponent(prop.address + ', San Antonio, TX');
-    document.getElementById('googleMapFrame').src =
-        `https://maps.google.com/maps?q=${address}&output=embed&z=16`;
     document.getElementById('mapTitle').textContent = prop.address;
     document.getElementById('mapPanel').classList.add('visible');
+    initMap();
+    markers.forEach(m => m.remove());
+    markers = [];
+    const marker = L.marker([prop.lat, prop.lng]).addTo(map).bindPopup(prop.address).openPopup();
+    markers.push(marker);
+    setTimeout(() => { map.invalidateSize(); map.setView([prop.lat, prop.lng], 16); }, 100);
 }
 
 function showAllPropertiesMap() {
-    document.getElementById('googleMapFrame').src =
-        `https://maps.google.com/maps?q=San+Antonio+TX&output=embed&z=11`;
     document.getElementById('mapTitle').textContent = 'Todas las propiedades';
     document.getElementById('mapPanel').classList.add('visible');
+    initMap();
+    markers.forEach(m => m.remove());
+    markers = [];
+    const visibleProps = properties.filter(p => !dismissedProperties.has(p.id));
+    const bounds = visibleProps.map(prop => {
+        const marker = L.marker([prop.lat, prop.lng]).addTo(map).bindPopup(prop.address);
+        markers.push(marker);
+        return [prop.lat, prop.lng];
+    });
+    if (bounds.length) {
+        setTimeout(() => { map.invalidateSize(); map.fitBounds(bounds, { padding: [30, 30] }); }, 100);
+    }
 }
 
 function closeMap() {
